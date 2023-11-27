@@ -544,7 +544,7 @@ void DrawGameStart(HWND hwnd) {
 		L"STATIC",
 		L"게임을 시작하겠습니까?",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
-		(width - 300) / 2, (height - 60) / 2 - 20, 300, 60,
+		(width - 350) / 2, (height - 60) / 2 - 20, 350, 60,
 		hwnd,
 		NULL,
 		hInst,
