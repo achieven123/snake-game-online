@@ -10,6 +10,7 @@ using namespace std;
 
 class Tools {
 public:
+    LPCWSTR IntToLPCWSTR(int value);
     const wchar_t* ConvertToWideString(const string& str);
     string CreateJsonData(Snake& snake, const string msg);
     void ParsingJsonData(Snake& snake1, Snake& snake2, const string msg);

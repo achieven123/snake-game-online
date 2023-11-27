@@ -2,7 +2,6 @@
 
 #include <Windows.h>
 #include <stdlib.h>
-#include <time.h>
 
 class Board {
 public:

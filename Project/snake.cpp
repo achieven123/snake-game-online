@@ -94,8 +94,8 @@ void Snake::setDirect(Snake& snake, int directKey) {
 void Snake::generateFood(int count, int(&map)[Board::HEIGHT][Board::WIDTH]) {
 	for (int i = 0; i < count; i++) {
 		while (true) {
-			int x = rand() % Board::WIDTH + 1;
-			int y = rand() % Board::HEIGHT + 1;
+			int x = rand() % (Board::WIDTH - 2) + 1;
+			int y = rand() % (Board::HEIGHT - 2) + 1;
 
 			if (map[y][x] == Board::GROUND) {
 				food.push_back(make_pair(x, y));
@@ -123,12 +123,12 @@ bool Snake::moveSnake(Snake& snake, Board& board) {
 		break;
 
 	case Board::FOOD:
+		score++;
 		valueToRemove = make_pair(next.first, next.second);
 		food.erase(std::remove(food.begin(), food.end(), valueToRemove), food.end());
 		//map[next.second][next.first] = Board::GROUND;
 		generateFood(1, map);
-		cout << "make one" << endl;
-		if (length < 11) length++;
+		if (length < 21) length++;
 		break;
 
 	case Board::WALL:
@@ -138,7 +138,7 @@ bool Snake::moveSnake(Snake& snake, Board& board) {
 
 	location.insert(location.begin(), next);
 
-	if (length == 11) {
+	if (length == 21) {
 		length--;
 		location.pop_back();
 	}

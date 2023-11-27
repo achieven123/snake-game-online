@@ -19,6 +19,7 @@ using namespace std;
 
 Game game;
 Tools tools;
+bool multi = false;
 bool gameStart = false;
 
 RECT rcClient;
@@ -102,7 +103,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		1200, 600,
+		955, 530,
 		NULL,
 		NULL,
 		hInstance,
@@ -132,11 +133,13 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case ID_SOLO_PLAYER:
+			multi = false;
 			DeleteSelectMode();
-			DrawServerInfo(hwnd);
+			DrawGameStart(hwnd);
 			break;
 
 		case ID_MULTI_PLAYER:
+			multi = true;
 			DeleteSelectMode();
 			DrawServerInfo(hwnd);
 			break;
@@ -208,6 +211,7 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 			DeleteGameStart();
 			ShowWindow(hwndMainMenu, SW_HIDE);
 			ShowWindow(hwndGame, SW_SHOWNORMAL);
+
 			break;
 		}
 		
@@ -234,22 +238,24 @@ LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (iMsg) {
 	case WM_CREATE:
-
+		game.startGame(multi);
 		break;
 
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
 
 		if (gameStart) {
-			if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
+			game.moveSnake(hdc, multi);
+			//if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
 		}
+
+		TextOut(hdc, 520, 450, L"상대를 기다리는 중...", wcslen(L"상대를 기다리는 중..."));
 
 		EndPaint(hwnd, &ps);
 		break;
 
 	case WM_KEYDOWN:
 		if (wParam == VK_SPACE) {
-			gameStart = true;
 			SetTimer(hwnd, 1, 100, NULL);
 		}
 
@@ -259,6 +265,11 @@ LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_TIMER:
 		InvalidateRgn(hwnd, NULL, TRUE);
+
+		if (game.IsTwoPlayer()) {
+			gameStart = true;
+		}
+
 		break;
 
 	case WM_DESTROY:
@@ -531,7 +542,7 @@ void DrawRoomCode(HWND hwnd) {
 void DrawGameStart(HWND hwnd) {
 	hGameStartStatic = CreateWindow(
 		L"STATIC",
-		L"방에 참가하겠습니까?",
+		L"게임을 시작하겠습니까?",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
 		(width - 300) / 2, (height - 60) / 2 - 20, 300, 60,
 		hwnd,
@@ -558,7 +569,7 @@ void DrawGameStart(HWND hwnd) {
 	hGameStartButton = CreateWindowEx(
 		NULL,
 		L"BUTTON",
-		L"Start",
+		L"START",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2, (height - 30) / 2 + 50, 100, 30,
 		hwnd,
