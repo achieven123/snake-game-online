@@ -55,8 +55,6 @@ void Tools::ParsingJsonData(Snake& snake1, Snake& snake2, const string recvMsg) 
 		string code = json["code"].asString();
 		int score = json["score"].asInt();
 		int length = json["length"].asInt();
-		int dx = json["dx"].asInt();
-		int dy = json["dy"].asInt();
 
 		vector<pair<int, int>> food;
 		vector<pair<int, int>> location;
@@ -75,14 +73,15 @@ void Tools::ParsingJsonData(Snake& snake1, Snake& snake2, const string recvMsg) 
 			location.emplace_back(x, y);
 		}
 
-		snake1.setMsg(msg);
-		if (msg == "Create room!" || msg == "Join room!") {
+		if (msg == "create room!" || msg == "join room!" || msg == "join error!") {
+			snake1.setMsg(msg);
 			snake1.setCode(code);
 		}
-		else {
-			snake1.setLength(length);
-			snake1.setFood(food);
-			snake1.setLocation(location);
+		else if (msg == "snake is moving!") {
+			snake2.setScore(score);
+			snake2.setLength(length);
+			snake2.setFood(food);
+			snake2.setLocation(location);
 		}
 	}
 	else {

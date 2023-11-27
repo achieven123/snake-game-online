@@ -241,7 +241,8 @@ LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hwnd, &ps);
 
 		if (gameStart) {
-			if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
+			game.moveSnake(hdc);
+			//if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
 		}
 
 		EndPaint(hwnd, &ps);
