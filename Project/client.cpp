@@ -11,24 +11,23 @@ void RecvData(SOCKET clientSocket, Snake& snake1, Snake& snake2) {
 	while (!WSAGetLastError()) {
 		ZeroMemory(&buffer, PACKET_SIZE);
 		recv(clientSocket, buffer, PACKET_SIZE, 0);
-		cout << ">> Server: " << buffer << endl;
 		tools.ParsingJsonData(snake1, snake2, buffer);
 	}
 }
 
-void Client::openClientSocket(HWND hwnd, const char* serverIP, const char* serverPort) {
+bool Client::openClientSocket(HWND hwnd, const char* serverIP, const char* serverPort) {
 	// 1. Winsock 초기화
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-		MessageBox(hwnd, TEXT("WSAStartup() Error"), TEXT("Error"), MB_ICONERROR);
-		return;
+		cout << ">> WSAStartup() Error" << endl;
+		return false;
 	}
 
 	// 2. 소켓 생성
 	clientSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (clientSocket == INVALID_SOCKET) {
-		MessageBox(hwnd, TEXT("socket() Error"), TEXT("Error"), MB_ICONERROR);
+		cout << ">> socket() Error" << endl;
 		WSACleanup();
-		return;
+		return false;
 	}
 
 	// 3. 서버 주소 구조체 설정
@@ -39,13 +38,14 @@ void Client::openClientSocket(HWND hwnd, const char* serverIP, const char* serve
 
 	// 4. 서버 연결
 	if (connect(clientSocket, (SOCKADDR*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
-		MessageBox(hwnd, TEXT("connect() Error"), TEXT("Error"), MB_ICONERROR);
+		cout << ">> connect() Error" << endl;
 		closesocket(clientSocket);
 		WSACleanup();
-		return;
+		return false;
 	}
-
-	MessageBox(hwnd, TEXT("연결 성공"), TEXT("Success"), MB_ICONINFORMATION);
+	
+	cout << ">> Server Connect!" << endl;
+	return true;
 }
 
 void Client::closeClientSocket() {

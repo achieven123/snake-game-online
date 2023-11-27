@@ -4,13 +4,13 @@
 #include <vector>
 #include <string>
 #include <Windows.h>
-
 #include "board.h"
 
 using namespace std;
 
 class Snake {
 private:
+	string msg;
 	string code;
 	int score;
 	int length;
@@ -22,6 +22,7 @@ private:
 public:
 	Snake();
 	
+	string getMsg();
 	string getCode();
 	int getScore();
 	int getDx();
@@ -30,6 +31,7 @@ public:
 	vector<pair<int, int>> getFood();
 	vector<pair<int, int>> getLocation();
 
+	void setMsg(string msg);
 	void setCode(string code);
 	void setScore(int score);
 	void setDx(int dx);

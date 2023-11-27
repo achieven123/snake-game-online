@@ -1,11 +1,9 @@
 #pragma once
 
-#define HOST "113.198.230.13"
-#define PORT "8080"
-
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <stdio.h>
 
 #include "snake.h"
 #include "board.h"
@@ -21,9 +19,11 @@ private:
 	Client client;
 
 public:
-	void initGame(HWND hwnd);
-	void startGame();
+	bool initGame(HWND hwnd, const char* _host, const char* _port);
+	void createRoom();
+	bool joinRoom(HWND hwnd, string code);
 	void endGame();
 	void setDirect(int directKey);
 	bool moveSnake(HDC hdc);
+	string getSnakeCode();
 };

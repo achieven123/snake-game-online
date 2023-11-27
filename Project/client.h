@@ -16,7 +16,7 @@ private:
 	SOCKADDR_IN clientAddr;
 
 public:
-    void openClientSocket(HWND hwnd, const char* serverIP, const char* serverPort);
+    bool openClientSocket(HWND hwnd, const char* serverIP, const char* serverPort);
     void closeClientSocket();
     void SendData(const string& msg);
     void makeThread(Snake& snake1, Snake& snake2);

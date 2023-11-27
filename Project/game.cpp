@@ -1,21 +1,46 @@
 #include "game.h"
 
-void Game::initGame(HWND hwnd) {
-	client.openClientSocket(hwnd, HOST, PORT);
-	client.makeThread(snake1, snake2);
+bool Game::initGame(HWND hwnd, const char* host, const char* port) {
+	bool openSuccessful = client.openClientSocket(hwnd, host, port);
+	
+	if (!openSuccessful) {
+		MessageBox(hwnd, TEXT("서버 연결 실패"), TEXT("Error"), MB_ICONERROR);
+		return false;
+	}
 
+	client.makeThread(snake1, snake2);
 	board1.initMap(0, 0);
 	board2.initMap(500, 0);
+	snake1.generateFood(10, board1.getMap());
+
+	return true;
 }
 
-void Game::startGame() {
+void Game::createRoom() {
 	Tools tools;
-	
-	snake1.generateFood(10, board1.getMap());
 	string msg = tools.CreateJsonData(snake1, "create");
 	client.SendData(msg);
+}
 
-	msg = tools.CreateJsonData(snake2, "join " + snake1.getCode());
+bool Game::joinRoom(HWND hwnd, string code) {
+	Tools tools;
+	
+	snake1.setCode(code);
+	
+	string msg = tools.CreateJsonData(snake1, "join");
+	client.SendData(msg);
+
+	Sleep(100);
+	string recvMsg = snake1.getMsg();
+
+	if (recvMsg == "Join error!") {
+		MessageBox(hwnd, TEXT("방이 없습니다."), TEXT("Error"), MB_ICONERROR);
+		return false;
+	}
+
+	snake1.setCode(code);
+
+	return true;
 }
 
 void Game::endGame() {
@@ -42,3 +67,6 @@ bool Game::moveSnake(HDC hdc) {
 	return gameover;
 }
 
+string Game::getSnakeCode() {
+	return snake1.getCode();
+}

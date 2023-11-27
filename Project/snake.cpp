@@ -12,6 +12,7 @@ Snake::Snake() {
 	location.push_back(make_pair(1, 1));
 }
 
+string Snake::getMsg() { return msg; }
 string Snake::getCode() { return code; }
 int Snake::getScore() { return score; }
 int Snake::getLength() { return length; }
@@ -20,6 +21,7 @@ int Snake::getDy() { return dy; }
 vector<pair<int, int>> Snake::getFood() { return food; }
 vector<pair<int, int>> Snake::getLocation() { return location; }
 
+void Snake::setMsg(string msg) { this->msg = msg; }
 void Snake::setCode(string code) { this->code = code; }
 void Snake::setScore(int score) { this->score = score; }
 void Snake::setDx(int dx) { this->dx = dx; }

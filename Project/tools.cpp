@@ -1,15 +1,10 @@
 #include "tools.h"
 
-//wstring s2ws(const std::string& str) {
-//	int slen = (int)str.length() + 1;
-//	int len = MultiByteToWideChar(CP_ACP, 0, str.c_str(), slen, 0, 0);
-//	wchar_t* buf = new wchar_t[len];
-//
-//	MultiByteToWideChar(CP_ACP, 0, str.c_str(), slen, buf, len);
-//	wstring res(buf);
-//	delete[] buf;
-//	return res;
-//}
+const wchar_t* Tools::ConvertToWideString(const string& str) {
+    static wstring_convert<codecvt_utf8<wchar_t>> converter;
+    static wstring wideString = converter.from_bytes(str);
+	return wideString.c_str();
+}
 
 string Tools::CreateJsonData(Snake& snake, const string msg) {
 	Json::Value json;
@@ -36,25 +31,23 @@ string Tools::CreateJsonData(Snake& snake, const string msg) {
 	}
 
 	json["msg"] = msg;
-	//json["code"] = snake.getCode();
-	//json["score"] = snake.getScore();
+	json["code"] = snake.getCode();
+	json["score"] = snake.getScore();
 	json["length"] = snake.getLength();
-	//json["dx"] = snake.getDx();
-	//json["dy"] = snake.getDy();
 	json["food"] = food;
 	json["location"] = location;
 
 	return Json::writeString(builder, json);
 }
 
-void Tools::ParsingJsonData(Snake& snake1, Snake& snake2, const string msg) {
+void Tools::ParsingJsonData(Snake& snake1, Snake& snake2, const string recvMsg) {
 	Json::Value json;
 	Json::CharReaderBuilder builder;
 	Json::CharReader* reader = builder.newCharReader();
 	
 	JSONCPP_STRING err;
 
-	bool parsingSuccessful = reader->parse(msg.c_str(), msg.c_str() + msg.size(), &json, &err);
+	bool parsingSuccessful = reader->parse(recvMsg.c_str(), recvMsg.c_str() + recvMsg.size(), &json, &err);
 	delete reader;
 
 	if (parsingSuccessful) {
@@ -82,13 +75,14 @@ void Tools::ParsingJsonData(Snake& snake1, Snake& snake2, const string msg) {
 			location.emplace_back(x, y);
 		}
 
+		snake1.setMsg(msg);
 		if (msg == "Create room!" || msg == "Join room!") {
 			snake1.setCode(code);
 		}
 		else {
-			snake2.setLength(length);
-			snake2.setFood(food);
-			snake2.setLocation(location);
+			snake1.setLength(length);
+			snake1.setFood(food);
+			snake1.setLocation(location);
 		}
 	}
 	else {
