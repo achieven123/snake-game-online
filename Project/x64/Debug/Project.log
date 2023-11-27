@@ -1,8 +1,0 @@
-﻿  main.cpp
-C:\Workspace\Github\snake-game-online\Project\main.cpp(124,6): warning C4101: 'hdc' :참조되지 않은 지역 변수입니다.
-C:\Workspace\Github\snake-game-online\Project\main.cpp(125,14): warning C4101: 'ps' :참조되지 않은 지역 변수입니다.
-C:\Workspace\Github\snake-game-online\Project\main.cpp(252,100): warning C4267: '인수': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Workspace\Github\snake-game-online\Project\main.cpp(262,18): warning C4244: '인수': 'WPARAM'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  Project.vcxproj -> C:\Workspace\Github\snake-game-online\x64\Debug\Project.exe
-  'pwsh.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
-  배치 파일이 아닙니다.
