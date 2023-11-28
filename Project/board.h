@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Windows.h>
-#include <stdlib.h>
 
 class Board {
 public:
@@ -23,9 +22,19 @@ private:
 public:
 	int getPosX();
 	int getPosY();
-
 	int(&getMap())[HEIGHT][WIDTH];
-	void generateFood(int count);
+	
+	/*
+	* @brief map 초기화 함수
+	* @param posX, posY map 생성 위치
+	* @details map 초기 위치를 정하고, 초기화
+	*/
 	void initMap(int posX, int posY);
+	
+	/*
+	* @brief map 그리기 함수
+	* @param hdc 디바이스 컨텍스트에 대한 핸들
+	* @details 2차원 배열 안에 있는 값에 대해 그림 그리기
+	*/
 	void drawMap(HDC hdc);
 };

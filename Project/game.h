@@ -21,16 +21,33 @@ private:
 	Snake snake1, snake2;
 	Board board1, board2;
 	Client client;
+	Tools tools;
+	bool gameProgress = false;
+	
+	string msg;
+	string code;
+	int player;
 
 public:
-	bool initGame(HWND hwnd, const char* _host, const char* _port);
+	//string getMsg();
+	//string getCode();
+	//int getPlayer();
+
+	//void setMsg(string msg);
+	//void setCode(string code);
+	//void setMsg(int player);
+	bool connectServer(HWND hwnd, const char* _host, const char* _port);
+	void initGame();
 	void createRoom();
 	bool joinRoom(HWND hwnd, string code);
-	void endGame();
-	void startGame(bool multi);
 
+	
+	void endGame();
+	void startGame();
+
+	void drawGame(HDC hdc, bool multi);
 	void setDirect(int directKey);
 	bool moveSnake(HDC hdc, bool multi);
-	string getSnakeCode();
-	bool IsTwoPlayer();
+	//string getSnakeCode();
+	//bool IsTwoPlayer();
 };

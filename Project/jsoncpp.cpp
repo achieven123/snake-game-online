@@ -3851,7 +3851,7 @@ String Value::getComment(CommentPlacement placement) const {
   return comments_.get(placement);
 }
 
-void Value::setOffsetStart(ptrdiff_t start) { start_ = start; }
+void Value::setOffsetStart(ptrdiff_t gameProgress) { start_ = gameProgress; }
 
 void Value::setOffsetLimit(ptrdiff_t limit) { limit_ = limit; }
 

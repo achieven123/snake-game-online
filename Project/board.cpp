@@ -2,8 +2,6 @@
 
 int Board::getPosX() { return posX; }
 int Board::getPosY() { return posY; }
-
-
 int(&Board::getMap())[HEIGHT][WIDTH] { return map; }
 
 void Board::initMap(int posX, int posY) {

@@ -1,19 +1,6 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#define PACKET_SIZE 10240
-
 #include "client.h"
-
-void RecvData(SOCKET clientSocket, Snake& snake1, Snake& snake2) {
-	char buffer[PACKET_SIZE] = {};
-	Tools tools;
-
-	while (!WSAGetLastError()) {
-		ZeroMemory(&buffer, PACKET_SIZE);
-		recv(clientSocket, buffer, PACKET_SIZE, 0);
-		tools.ParsingJsonData(snake1, snake2, buffer);
-	}
-}
 
 bool Client::openClientSocket(HWND hwnd, const char* serverIP, const char* serverPort) {
 	// 1. Winsock 초기화
@@ -53,11 +40,30 @@ void Client::closeClientSocket() {
 	WSACleanup();
 }
 
-void Client::SendData(const string& msg) {
-	send(clientSocket, msg.c_str(), msg.size(), 0);
+void Client::sendData(const string& data) {
+	send(clientSocket, data.c_str(), data.size(), 0);
 }
 
-void Client::makeThread(Snake& snake1, Snake& snake2) {
-	thread recvThread = thread(RecvData, clientSocket, ref(snake1), ref(snake2));
+/*
+* @brief 데이터 수신 함수
+* @param clientSocket 클라이언트 소켓
+* @param snake 상대 플레이어 정보
+* @param msg, code, player 게임 정보
+* @details 서버로부터 데이터를 받아 상대 Snake의 값과 게임 정보(msg, code, player)를 설정
+*/
+void recvData(SOCKET clientSocket, Snake& snake, string& msg, string& code, int& player) {
+	char buffer[PACKET_SIZE];
+	Tools tools;
+
+	while (!WSAGetLastError()) {
+		ZeroMemory(&buffer, PACKET_SIZE);
+		recv(clientSocket, buffer, PACKET_SIZE, 0);
+		cout << ">> Server:" << buffer << endl;
+		tools.parsingJsonData(buffer, snake, msg, code, player);
+	}
+}
+
+void Client::makeThread(Snake& snake, string& msg, string& code, int& player) {
+	thread recvThread = thread(recvData, clientSocket, ref(snake), ref(msg), ref(code), ref(player));
 	recvThread.detach();
 }

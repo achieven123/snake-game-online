@@ -1129,7 +1129,7 @@ public:
 
   // Accessors for the [start, limit) range of bytes within the JSON text from
   // which this value was parsed, if any.
-  void setOffsetStart(ptrdiff_t start);
+  void setOffsetStart(ptrdiff_t gameProgress);
   void setOffsetLimit(ptrdiff_t limit);
   ptrdiff_t getOffsetStart() const;
   ptrdiff_t getOffsetLimit() const;
