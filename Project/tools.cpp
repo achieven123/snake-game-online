@@ -44,7 +44,7 @@ string Tools::createJsonData(Snake& snake, const string msg) {
 	return Json::writeString(builder, json);
 }
 
-void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player, int& state) {
+void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& state) {
 	Json::Value json;
 	Json::CharReaderBuilder builder;
 	Json::CharReader* reader = builder.newCharReader();
@@ -57,7 +57,6 @@ void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, str
 	if (parsingSuccessful) {
 		msg = json["msg"].asString();
 		code = json["code"].asString();
-		player = json["player"].asInt();
 		
 		int score = json["score"].asInt();
 		int length = json["length"].asInt();
@@ -78,13 +77,13 @@ void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, str
 		}
 
 		if (msg == "ready") {
-			state = 0;
+			state = 4;
 		}
 		else if (msg == "start") {
-			state = 1;
+			state = 7;
 		}
 		else if (msg == "end") {
-			state = 2;
+			state = 9;
 		}
 		else if (msg == "move") {
 			snake.setScore(score);

@@ -11,14 +11,27 @@
 #include "client.h"
 #include "tools.h"
 
-#define ID_READY 0
-#define ID_START 1
-#define ID_END 2
-#define ID_GAME 3
-
 using namespace std;
 
 class Game {
+public:
+	static const int SOLO = 0;
+	static const int MULTI = 1;
+
+	static const int HOST = 0;
+	static const int GUEST = 1;
+
+	static const int MAIN_MENU = 0;
+	static const int SERVER_INFO = 1;
+	static const int SELECT_TYPE = 2;
+	static const int HOST_WAIT_GUEST = 3;
+	static const int HOST_WAIT_GAME_START = 4;
+	static const int GUEST_WAIT_CODE_INPUT = 5;
+	static const int GUEST_WAIT_HOST_GAME_START = 6;
+	static const int GAME_START = 7;
+	static const int GAME_IN_PROGRESS = 8;
+	static const int GAME_END = 9;
+
 private:
 	Snake snake1, snake2;
 	Board board1, board2;
@@ -27,15 +40,24 @@ private:
 	
 	string msg;
 	string code;
-	int player;
-	int state = ID_READY;
+	
+	int mode;
+	int type;
+	int state;
+
+	bool isWin = true;
 
 public:
 	string getCode();
-	int getPlayer();
+	int getMode();
+	int getType();
 	int getState();
+	bool getIsWin();
 
+	void setMode(int mode);
+	void setType(int type);
 	void setState(int state);
+	void setIsWin(bool isWin);
 
 	/*
 	* @brief 서버 연결 함수
@@ -46,9 +68,31 @@ public:
 	*/
 	bool connectServer(HWND hwnd, const char* host, const char* port);
 
+	/*
+	* @brief Room 생성 함수
+	* @details 서버에 create 메시지를 보냄
+	*/
 	void createRoom();
-
+	
+	/*
+	* @brief Room 참가 함수
+	* @param code 서버에 보낼 Room Code
+	* @details 서버에 join 메시지를 보냄
+	*/
 	bool joinRoom(HWND hwnd, const string code);
+
+	/*
+	* @brief 게임 시작 함수
+	* @details 서버에 start 메시지를 보냄
+	*/
+	void startGame();
+
+	/*
+	* @brief 게임 종료 함수
+	* @details 서버에 end 메시지를 보냄
+	*/
+	void endGame();
+
 
 	/*
 	* @brief Game 초기화 함수
@@ -56,10 +100,8 @@ public:
 	*/
 	void initGame();
 
-	void startGame();
-	void endGame();
 
 	void drawGame(HDC hdc);
 	void setDirect(int directKey);
-	bool moveSnake(HDC hdc, bool multi);
+	void moveSnake();
 };

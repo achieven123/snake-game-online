@@ -1,70 +1,58 @@
-#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
+//#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
 
 #include <windows.h>
 #include <tchar.h>
 #include "game.h"
 #include "tools.h"
 
-#define ID_SOLO_PLAYER 100
-#define ID_MULTI_PLAYER 101
-#define ID_SERVER_BACK_BUTTON 200
-#define ID_SERVER_NEXT_BUTTON 201
+#define ID_SOLO_PLAYER_BUTTON 100
+#define ID_MULTI_PLAYER_BUTTON 101
+#define ID_INPUT_SERVER_INFO_BACK_BUTTON 200
+#define ID_INPUT_SERVER_INFO_NEXT_BUTTON 201
 #define ID_CREATE_ROOM 300
 #define ID_JOIN_ROOM 301
-#define ID_CODE_BACK_BUTTON 400
-#define ID_CODE_NEXT_BUTTON 401
+#define ID_INPUT_ROOM_CODE_BACK_BUTTON 400
+#define ID_INPUT_ROOM_CODE_NEXT_BUTTON 401
 #define ID_GAME_START 500
-
-#define ID_HOST 0
-#define ID_GUEST 1
-
-#define ID_READY 0
-#define ID_START 1
-#define ID_END 2
-#define ID_GAME 3
+#define ID_GAME_START_BACK_BUTTON 501
 
 using namespace std;
 
 Game game;
 Tools tools;
-int playerType;
 
 RECT rcClient;
 HFONT hFont;
 int width, height;
 
 HINSTANCE hInst;
-HWND hwndMainMenu, hwndGame;
+HWND hMainMenu, hMultiPlayerGame, hSoloPlayerGame;
 HWND hGameTitle, hSoloPlayerButton, hMultiPlayerButton;
-HWND hIPAddressStatic, hPortStatic, hIPAddress, hPort, hServerBackButton, hServerNextButton;
-HWND hRoomTypeStatic, hCreateRoomButton, hJoinRoomButton;
-HWND hRoomCodeStatic, hCodeStatic, hCode, hCodeBackButton, hCodeNextButton;
-HWND hGameHostWaitingStatic, hStartRoomCodeStatic;
-HWND hGameGuestWaitingStatic;
-HWND hGameStartStatic, hGameStartButton;
+HWND hIPAddressStatic, hPortStatic, hIPAddress, hPort, hInputServerInfoBackButton, hInputServerInfoNextButton;
+HWND hSelectTypeStatic, hCreateRoomButton, hJoinRoomButton;
+HWND hHostWaitGuest, hRoomCodeStatic;
+HWND hHostGameStartStatic, hHostGameStartButton, hHostGameStartBackButton;
+HWND hGuestWaitCodeInputStatic, hCodeStatic, hCode, hGuestWaitCodeInputBackButton, hGuestWaitCodeInputNextButton;
+HWND hGuestWaitHostGameStartStatic;
 
-LPCTSTR MainMenuClass = TEXT("Main Menu Class");
-LPCTSTR GameClass = TEXT("Server Info Class");
+LPCTSTR mainMenuClass = TEXT("Main Menu Class");
+LPCTSTR soloPlayerClass = TEXT("Solo Player Class");
+LPCTSTR multiPlayerClass = TEXT("Multi Player Class");
 
 LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WinProcSoloPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WinProcMultiPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 void DrawSetting(HWND hwnd);
-void DrawSelectMode(HWND hwnd);
-void DrawServerInfo(HWND hwnd);
-void DrawRoomType(HWND hwnd);
-void DrawRoomCode(HWND hwnd);
-void DrawGameHostWaiting(HWND hwnd);
-void DrawGameHostStart(HWND hwnd);
-void DrawGameGuestWaiting(HWND hwnd);
-
-void DeleteSelectMode();
-void DeleteServerInfo();
-void DeleteRoomType();
-void DeleteRoomCode();
-void DeleteGameHostWaiting();
-void DeleteGameHostStart();
-void DeleteGameGuestWaiting();
+void DrawWindow(HWND hwnd);
+void DrawMainMenu(HWND hwnd);
+void DrawInputServerInfo(HWND hwnd);
+void DrawSelectType(HWND hwnd);
+void DrawHostWaitGuest(HWND hwnd);
+void DrawHostWaitStartGame(HWND hwnd);
+void DrawGuestWaitInputCode(HWND hwnd);
+void DrawGuestWaitHostStartGame(HWND hwnd);
+void DeleteAllWindows();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpszCmdLine, _In_ int nCmdShow) {
 	MSG		 msg;
@@ -81,17 +69,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	WndClass.lpszMenuName = NULL;
 
-	WndClass.lpszClassName = MainMenuClass;
+	WndClass.lpszClassName = mainMenuClass;
 	WndClass.lpfnWndProc = WinProcMainMenu;
 	RegisterClass(&WndClass);
 
-	WndClass.lpszClassName = GameClass;
-	WndClass.lpfnWndProc = WinProcGame;
+	WndClass.lpszClassName = soloPlayerClass;
+	WndClass.lpfnWndProc = WinProcSoloPlayerGame;
 	RegisterClass(&WndClass);
 
-	hwndMainMenu = CreateWindowEx(
+	WndClass.lpszClassName = multiPlayerClass;
+	WndClass.lpfnWndProc = WinProcMultiPlayerGame;
+	RegisterClass(&WndClass);
+
+	hMainMenu = CreateWindowEx(
 		0,
-		MainMenuClass,
+		mainMenuClass,
 		L"Snake Game",
 		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
 		CW_USEDEFAULT,
@@ -103,11 +95,27 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		NULL
 	);
 
-	ShowWindow(hwndMainMenu, nCmdShow);
+	ShowWindow(hMainMenu, nCmdShow);
 
-	hwndGame = CreateWindowEx(
+	hSoloPlayerGame = CreateWindowEx(
 		0,
-		GameClass,
+		soloPlayerClass,
+		L"Snake Game",
+		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		455, 530,
+		NULL,
+		NULL,
+		hInstance,
+		NULL
+	);
+
+	ShowWindow(hSoloPlayerGame, SW_HIDE);
+
+	hMultiPlayerGame = CreateWindowEx(
+		0,
+		multiPlayerClass,
 		L"Snake Game",
 		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
 		CW_USEDEFAULT,
@@ -119,7 +127,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		NULL
 	);
 
-	ShowWindow(hwndGame, SW_HIDE);
+	ShowWindow(hMultiPlayerGame, SW_HIDE);
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
@@ -134,29 +142,32 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 	PAINTSTRUCT ps;
 
 	switch (iMsg) {
-	case WM_CREATE:
+	case WM_PAINT:
 		DrawSetting(hwnd);
-		DrawSelectMode(hwnd);
+		DrawWindow(hwnd);
 		break;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case ID_SOLO_PLAYER:
-			DeleteSelectMode();
-			DrawGameHostStart(hwnd);
+		case ID_SOLO_PLAYER_BUTTON:
+			game.setMode(Game::SOLO);
+			game.setState(Game::HOST_WAIT_GAME_START);
+			DrawWindow(hwnd);
 			break;
 
-		case ID_MULTI_PLAYER:
-			DeleteSelectMode();
-			DrawServerInfo(hwnd);
+		case ID_MULTI_PLAYER_BUTTON:
+			game.setMode(Game::MULTI);
+			game.setState(Game::SERVER_INFO);
+			DrawWindow(hwnd);
+			SetTimer(hwnd, Game::MULTI, 500, NULL);
 			break;
 
-		case ID_SERVER_BACK_BUTTON:
-			DeleteServerInfo();
-			DrawSelectMode(hwnd);
+		case ID_INPUT_SERVER_INFO_BACK_BUTTON:
+			game.setState(Game::MAIN_MENU);
+			DrawMainMenu(hwnd);
 			break;
 
-		case ID_SERVER_NEXT_BUTTON:
+		case ID_INPUT_SERVER_INFO_NEXT_BUTTON:
 			WCHAR _host[256];
 			WCHAR _port[6];
 
@@ -173,33 +184,30 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 			connectSuccessful = game.connectServer(hwnd, host, port);
 
 			if (connectSuccessful) {
-				DeleteServerInfo();
-				DrawRoomType(hwnd);
+				game.setState(Game::SELECT_TYPE);
+				DrawWindow(hwnd);
 			}
-
 			break;
 
 		case ID_CREATE_ROOM:
-			playerType = ID_HOST;
 			game.createRoom();
-			Sleep(50);
-			DeleteRoomType();
-			DrawGameHostWaiting(hwnd);
-			SetTimer(hwnd, 1, 1000, NULL);
+			game.setType(Game::HOST);
+			game.setState(Game::HOST_WAIT_GUEST);
+			DrawWindow(hwnd);
 			break;
 
 		case ID_JOIN_ROOM:
-			playerType = ID_GUEST;
-			DeleteRoomType();
-			DrawRoomCode(hwnd);
+			game.setType(Game::GUEST);
+			game.setState(Game::GUEST_WAIT_CODE_INPUT);
+			DrawWindow(hwnd);
 			break;
 
-		case ID_CODE_BACK_BUTTON:
-			DeleteRoomCode();
-			DrawRoomType(hwnd);
+		case ID_INPUT_ROOM_CODE_BACK_BUTTON:
+			game.setState(Game::SELECT_TYPE);
+			DrawWindow(hwnd);
 			break;
 
-		case ID_CODE_NEXT_BUTTON:
+		case ID_INPUT_ROOM_CODE_NEXT_BUTTON:
 			WCHAR _code[7];
 
 			char code[7];
@@ -212,19 +220,21 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 			joinSuccessful = game.joinRoom(hwnd, code);
 
 			if (joinSuccessful) {
-				DeleteRoomCode();
-				DrawGameGuestWaiting(hwnd);
-				SetTimer(hwnd, 1, 1000, NULL);
+				game.setState(Game::GUEST_WAIT_HOST_GAME_START);
+				DrawWindow(hwnd);
 			}
-
 			break;
 
 		case ID_GAME_START:
-			game.startGame();
-			DeleteGameHostWaiting();
+			game.setState(Game::GAME_START);
+			DrawWindow(hwnd);
+			break;
+
+		case ID_GAME_START_BACK_BUTTON:
+			if (game.getMode() == Game::SOLO) game.setState(Game::MAIN_MENU);
+			DrawWindow(hwnd);
 			break;
 		}
-		
 		break;
 
 	case WM_CTLCOLORSTATIC:
@@ -234,38 +244,12 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 		return (LRESULT)GetStockObject(NULL_BRUSH);
 
 	case WM_TIMER:
-		if (game.getState() == ID_READY) {
-			if (playerType == ID_HOST && game.getPlayer() == 2) {
-				DeleteGameHostWaiting();
-				DeleteGameHostStart();
-				DrawGameHostStart(hwnd);
+		if (wParam == Game::MULTI) {
+			cout << game.getState() << endl;
+			if (game.getState() == Game::HOST_WAIT_GAME_START || game.getState() == Game::GAME_START) {
+				DrawWindow(hwnd);
 			}
 		}
-		else if (game.getState() == ID_START) {
-			if (playerType == ID_HOST) {
-				DeleteGameHostStart();
-				cout << "start" << endl;
-			}
-			else if (playerType == ID_GUEST) {
-				DeleteGameGuestWaiting();
-			}
-
-			game.setState(ID_GAME);
-			ShowWindow(hwndMainMenu, SW_HIDE);
-			ShowWindow(hwndGame, SW_SHOWNORMAL);
-		}
-		else if (game.getState() == ID_END) {
-			game.setState(ID_READY);
-			playerType = ID_HOST;
-
-			DeleteGameGuestWaiting();
-			DeleteGameHostStart();
-			DrawGameHostWaiting(hwnd);
-			
-			ShowWindow(hwndMainMenu, SW_SHOWNORMAL);
-			ShowWindow(hwndGame, SW_HIDE);
-		}
-
 		break;
 
 	case WM_DESTROY:
@@ -277,51 +261,124 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 	return DefWindowProc(hwnd, iMsg, wParam, lParam);
 }
 
-LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WinProcSoloPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 	HDC hdc;
 	PAINTSTRUCT ps;
 
 	switch (iMsg) {
 	case WM_CREATE:
-		game.initGame();
 		break;
 
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
-		
+		game.drawGame(hdc);
 
-		//if (gameStart) {
-		//	game.moveSnake(hdc, multi);
-		//	//if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
-		//}
-		//if (game.getPlayer() == 1) {
-		//	TextOut(hdc, 520, 450, L"상대를 기다리는 중...", wcslen(L"상대를 기다리는 중..."));
-		//}
+		if (game.getState() == Game::GAME_START) {
+			game.initGame();
+			game.setState(Game::GAME_IN_PROGRESS);
+			SetTimer(hwnd, 1, 100, NULL);
+		}
+		else if (game.getState() == Game::GAME_IN_PROGRESS) {
+			game.moveSnake();
+		}
+		
+		if (game.getIsWin() == false) {
+			game.setIsWin(true);
+			KillTimer(hwnd, 1);
+			MessageBox(hwnd, L"게임 종료!", L"알림", MB_OK | MB_ICONWARNING);
+			ShowWindow(hMainMenu, SW_SHOWNORMAL);
+			ShowWindow(hSoloPlayerGame, SW_HIDE);
+			game.setState(Game::HOST_WAIT_GAME_START);
+		}
 
 		EndPaint(hwnd, &ps);
 		break;
 
 	case WM_KEYDOWN:
-		if (wParam == VK_SPACE) {
+		switch (wParam) {
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+			game.setDirect(wParam);
+			break;
+		}
+		break;
+
+	case WM_TIMER:
+		InvalidateRgn(hwnd, NULL, TRUE);	
+		break;
+
+	case WM_DESTROY:
+		KillTimer(hwnd, 1);
+		PostQuitMessage(0);
+		break;
+	}
+
+	return DefWindowProc(hwnd, iMsg, wParam, lParam);
+}
+
+LRESULT CALLBACK WinProcMultiPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+	HDC hdc;
+	PAINTSTRUCT ps;
+
+	switch (iMsg) {
+	case WM_CREATE:
+		break;
+
+	case WM_PAINT:
+		hdc = BeginPaint(hwnd, &ps);
+		game.drawGame(hdc);
+		cout << game.getState() << endl;
+
+		if (game.getState() == Game::GAME_START) {
+			game.setState(Game::GAME_IN_PROGRESS);
+			game.initGame();
 			SetTimer(hwnd, 1, 100, NULL);
+			Sleep(1000);
+		}
+		else if (game.getState() == Game::GAME_IN_PROGRESS) {
+			game.moveSnake();
+		}
+		else if (game.getState() == Game::GAME_END) {
+			KillTimer(hwnd, 1);
+			if (game.getIsWin()) {
+				MessageBox(hwnd, L"이겼습니다!", L"알림", MB_OK | MB_ICONWARNING);
+			}
+			else {
+				MessageBox(hwnd, L"졌습니다!", L"알림", MB_OK | MB_ICONWARNING);
+			}
+
+			game.setIsWin(true);
+
+			if (game.getType() == Game::HOST) game.setState(Game::HOST_WAIT_GAME_START);
+			if (game.getType() == Game::GUEST) game.setState(Game::GUEST_WAIT_HOST_GAME_START);
+
+			ShowWindow(hMainMenu, SW_SHOWNORMAL);
+			ShowWindow(hMultiPlayerGame, SW_HIDE);
 		}
 
-		game.setDirect(wParam);
+		EndPaint(hwnd, &ps);
+		break;
 
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+			game.setDirect(wParam);
+			break;
+		}
 		break;
 
 	case WM_TIMER:
 		InvalidateRgn(hwnd, NULL, TRUE);
-		
-		if (!game.getState()) {
-			ShowWindow(hwndGame, SW_HIDE);
-			ShowWindow(hwndMainMenu, SW_SHOWNORMAL);
-		}
-
 		break;
 
 	case WM_DESTROY:
 		game.endGame();
+		KillTimer(hwnd, 1);
 		PostQuitMessage(0);
 		break;
 	}
@@ -349,7 +406,67 @@ void DrawSetting(HWND hwnd) {
 	);
 }
 
-void DrawSelectMode(HWND hwnd) {
+void DrawWindow(HWND hwnd) {
+	DeleteAllWindows();
+	
+	if (game.getMode() == Game::SOLO) {
+		switch (game.getState()) {
+		case Game::MAIN_MENU:
+			DrawMainMenu(hwnd);
+			break;
+
+		case Game::HOST_WAIT_GAME_START:
+			DrawHostWaitStartGame(hwnd);
+			break;
+
+		case Game::GAME_START:
+			ShowWindow(hMainMenu, SW_HIDE);
+			ShowWindow(hSoloPlayerGame, SW_SHOWNORMAL);
+			break;
+		}
+	}
+	else if (game.getMode() == Game::MULTI) {
+		switch (game.getState()) {
+		case Game::MAIN_MENU:
+			DrawMainMenu(hwnd);
+			break;
+
+		case Game::SERVER_INFO:
+			DrawInputServerInfo(hwnd);
+			break;
+
+		case Game::SELECT_TYPE:
+			DrawSelectType(hwnd);
+			break;
+
+		case Game::HOST_WAIT_GUEST:
+			Sleep(300);
+			DrawHostWaitGuest(hwnd);
+			break;
+
+		case Game::HOST_WAIT_GAME_START:
+			DrawHostWaitStartGame(hwnd);
+			break;
+
+		case Game::GUEST_WAIT_CODE_INPUT:
+			DrawGuestWaitInputCode(hwnd);
+			break;
+
+		case Game::GUEST_WAIT_HOST_GAME_START:
+			DrawGuestWaitHostStartGame(hwnd);
+			break;
+
+		case Game::GAME_START:
+			ShowWindow(hMainMenu, SW_HIDE);
+			ShowWindow(hMultiPlayerGame, SW_SHOWNORMAL);
+			game.startGame();
+			Sleep(100);
+			break;
+		}
+	}
+}
+
+void DrawMainMenu(HWND hwnd) {
 	hGameTitle = CreateWindow(
 		L"STATIC",
 		L"SNAKE GAME",
@@ -370,7 +487,7 @@ void DrawSelectMode(HWND hwnd) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2, (height - 30) / 2 + 50, 100, 30,
 		hwnd,
-		(HMENU)ID_SOLO_PLAYER,
+		(HMENU)ID_SOLO_PLAYER_BUTTON,
 		hInst,
 		NULL
 	);
@@ -382,13 +499,13 @@ void DrawSelectMode(HWND hwnd) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2, (height - 30) / 2 + 100, 100, 30,
 		hwnd,
-		(HMENU)ID_MULTI_PLAYER,
+		(HMENU)ID_MULTI_PLAYER_BUTTON,
 		hInst,
 		NULL
 	);
 }
 
-void DrawServerInfo(HWND hwnd) {
+void DrawInputServerInfo(HWND hwnd) {
 	hGameTitle = CreateWindow(
 		L"STATIC",
 		L"SNAKE GAME",
@@ -447,33 +564,33 @@ void DrawServerInfo(HWND hwnd) {
 		hInst,
 		NULL);
 
-	hServerBackButton = CreateWindowEx(
+	hInputServerInfoBackButton = CreateWindowEx(
 		NULL,
 		L"BUTTON",
 		L"< 뒤로",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2 + 100, (height - 30) / 2 + 150, 100, 30,
 		hwnd,
-		(HMENU)ID_SERVER_BACK_BUTTON,
+		(HMENU)ID_INPUT_SERVER_INFO_BACK_BUTTON,
 		hInst,
 		NULL
 	);
 
-	hServerNextButton = CreateWindowEx(
+	hInputServerInfoNextButton = CreateWindowEx(
 		NULL,
 		L"BUTTON",
 		L"다음 >",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2 + 220, (height - 30) / 2 + 150, 100, 30,
 		hwnd,
-		(HMENU)ID_SERVER_NEXT_BUTTON,
+		(HMENU)ID_INPUT_SERVER_INFO_NEXT_BUTTON,
 		hInst,
 		NULL
 	);
 }
 
-void DrawRoomType(HWND hwnd) {
-	hRoomTypeStatic = CreateWindow(
+void DrawSelectType(HWND hwnd) {
+	hSelectTypeStatic = CreateWindow(
 		L"STATIC",
 		L"참여 방법 선택",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -484,7 +601,7 @@ void DrawRoomType(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hRoomTypeStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessage(hSelectTypeStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	hCreateRoomButton = CreateWindowEx(
 		NULL,
@@ -511,8 +628,76 @@ void DrawRoomType(HWND hwnd) {
 	);
 }
 
-void DrawRoomCode(HWND hwnd) {
+void DrawHostWaitGuest(HWND hwnd) {
+	hHostWaitGuest = CreateWindow(
+		L"STATIC",
+		L"상대를 기다리는 중...",
+		WS_CHILD | WS_VISIBLE | SS_CENTER,
+		(width - 350) / 2, (height - 60) / 2 - 20, 350, 60,
+		hwnd,
+		NULL,
+		hInst,
+		NULL
+	);
+
+	SendMessage(hHostWaitGuest, WM_SETFONT, (WPARAM)hFont, TRUE);
+	wstring _code = tools.stringToWString("Room Code: " + game.getCode());
+	
 	hRoomCodeStatic = CreateWindow(
+		L"STATIC",
+		_code.c_str(),
+		WS_CHILD | WS_VISIBLE | SS_CENTER,
+		(width - 300) / 2, (height - 60) / 2 + 50, 300, 60,
+		hwnd,
+		NULL,
+		hInst,
+		NULL
+	);
+}
+
+void DrawHostWaitStartGame(HWND hwnd) {
+	hHostGameStartStatic = CreateWindow(
+		L"STATIC",
+		L"게임을 시작하겠습니까?",
+		WS_CHILD | WS_VISIBLE | SS_CENTER,
+		(width - 350) / 2, (height - 60) / 2 - 20, 350, 60,
+		hwnd,
+		NULL,
+		hInst,
+		NULL
+	);
+	
+	SendMessage(hHostGameStartStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	hHostGameStartButton = CreateWindowEx(
+		NULL,
+		L"BUTTON",
+		L"START",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		(width - 100) / 2, (height - 30) / 2 + 50, 100, 30,
+		hwnd,
+		(HMENU)ID_GAME_START,
+		hInst,
+		NULL
+	);
+
+	if (game.getMode() == Game::SOLO) {
+		hHostGameStartBackButton = CreateWindowEx(
+			NULL,
+			L"BUTTON",
+			L"< 뒤로",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			(width - 100) / 2 + 220, (height - 30) / 2 + 150, 100, 30,
+			hwnd,
+			(HMENU)ID_GAME_START_BACK_BUTTON,
+			hInst,
+			NULL
+		);
+	}
+}
+
+void DrawGuestWaitInputCode(HWND hwnd) {
+	hGuestWaitCodeInputStatic = CreateWindow(
 		L"STATIC",
 		L"Room Code 입력",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -523,7 +708,7 @@ void DrawRoomCode(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hRoomCodeStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessage(hGuestWaitCodeInputStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 	
 	hCodeStatic = CreateWindow(
 		L"STATIC",
@@ -541,94 +726,40 @@ void DrawRoomCode(HWND hwnd) {
 		L"EDIT",
 		L"",
 		WS_CHILD | WS_VISIBLE | WS_BORDER,
-		(width - 150) / 2 + 50, (height - 25) / 2 + 25, 150, 25,
+		(width - 150) / 2 + 50, (height - 25) / 2 + 27, 150, 25,
 		hwnd,
 		NULL,
 		hInst,
 		NULL
 	);
 
-	hCodeBackButton = CreateWindowEx(
+	hGuestWaitCodeInputBackButton = CreateWindowEx(
 		NULL,
 		L"BUTTON",
 		L"< 뒤로",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2 + 100, (height - 30) / 2 + 150, 100, 30,
 		hwnd,
-		(HMENU)ID_CODE_BACK_BUTTON,
+		(HMENU)ID_INPUT_ROOM_CODE_BACK_BUTTON,
 		hInst,
 		NULL
 	);
 
-	hCodeNextButton = CreateWindowEx(
+	hGuestWaitCodeInputNextButton = CreateWindowEx(
 		NULL,
 		L"BUTTON",
 		L"다음 >",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		(width - 100) / 2 + 220, (height - 30) / 2 + 150, 100, 30,
 		hwnd,
-		(HMENU)ID_CODE_NEXT_BUTTON,
+		(HMENU)ID_INPUT_ROOM_CODE_NEXT_BUTTON,
 		hInst,
 		NULL
 	);
 }
 
-void DrawGameHostWaiting(HWND hwnd) {
-	hGameHostWaitingStatic = CreateWindow(
-		L"STATIC",
-		L"상대를 기다리는 중...",
-		WS_CHILD | WS_VISIBLE | SS_CENTER,
-		(width - 350) / 2, (height - 60) / 2 - 20, 350, 60,
-		hwnd,
-		NULL,
-		hInst,
-		NULL
-	);
-
-	SendMessage(hGameHostWaitingStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
-	wstring _code = tools.stringToWString("Room Code: " + game.getCode());
-	
-	hStartRoomCodeStatic = CreateWindow(
-		L"STATIC",
-		_code.c_str(),
-		WS_CHILD | WS_VISIBLE | SS_CENTER,
-		(width - 300) / 2, (height - 60) / 2 + 50, 300, 60,
-		hwnd,
-		NULL,
-		hInst,
-		NULL
-	);
-}
-
-void DrawGameHostStart(HWND hwnd) {
-	hGameStartStatic = CreateWindow(
-		L"STATIC",
-		L"게임을 시작하겠습니까?",
-		WS_CHILD | WS_VISIBLE | SS_CENTER,
-		(width - 350) / 2, (height - 60) / 2 - 20, 350, 60,
-		hwnd,
-		NULL,
-		hInst,
-		NULL
-	);
-	
-	SendMessage(hGameStartStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
-
-	hGameStartButton = CreateWindowEx(
-		NULL,
-		L"BUTTON",
-		L"START",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		(width - 100) / 2, (height - 30) / 2 + 50, 100, 30,
-		hwnd,
-		(HMENU)ID_GAME_START,
-		hInst,
-		NULL
-	);
-}
-
-void DrawGameGuestWaiting(HWND hwnd) {
-	hGameGuestWaitingStatic = CreateWindow(
+void DrawGuestWaitHostStartGame(HWND hwnd) {
+	hGuestWaitHostGameStartStatic = CreateWindow(
 		L"STATIC",
 		L"호스트가 게임을 시작하길 기다리는 중...",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -639,74 +770,37 @@ void DrawGameGuestWaiting(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hGameGuestWaitingStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
-	
-	//string str = "Room Code: " /*+ game.getSnakeCode()*/;
-	//const wchar_t* roomCode = tools.ConvertToWideString(str);
-	//std::wstring wideString(roomCode);
-
-	//// wstring을 string으로 변환
-	//std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-	//std::string convertedString = converter.to_bytes(wideString);
-
-	// 변환된 string 출력
-	//std::cout << "Code: " << str << std::endl;
-	//std::wcout << "Converted string: " << wideString << std::endl;
-
-	//if (multi) {
-	//	hStartRoomCodeStatic = CreateWindow(
-	//		L"STATIC",
-	//		L"asdfa",
-	//		WS_CHILD | WS_VISIBLE | SS_CENTER,
-	//		(width - 300) / 2, (height - 60) / 2 + 25, 300, 60,
-	//		hwnd,
-	//		NULL,
-	//		hInst,
-	//		NULL
-	//	);
-	//}
+	SendMessage(hGuestWaitHostGameStartStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 }
 
-void DeleteSelectMode() {
+void DeleteAllWindows() {
 	ShowWindow(hGameTitle, SW_HIDE);
 	ShowWindow(hSoloPlayerButton, SW_HIDE);
 	ShowWindow(hMultiPlayerButton, SW_HIDE);
-}
 
-void DeleteServerInfo() {
-	ShowWindow(hGameTitle, SW_HIDE);
+	ShowWindow(hSelectTypeStatic, SW_HIDE);
+	ShowWindow(hCreateRoomButton, SW_HIDE);
+	ShowWindow(hJoinRoomButton, SW_HIDE);
+
+	ShowWindow(hHostWaitGuest, SW_HIDE);
+	ShowWindow(hRoomCodeStatic, SW_HIDE);
+
+	ShowWindow(hHostGameStartStatic, SW_HIDE);
+	ShowWindow(hHostGameStartButton, SW_HIDE);
+	ShowWindow(hHostGameStartBackButton, SW_HIDE);
+
 	ShowWindow(hIPAddressStatic, SW_HIDE);
 	ShowWindow(hPortStatic, SW_HIDE);
 	ShowWindow(hIPAddress, SW_HIDE);
 	ShowWindow(hPort, SW_HIDE);
-	ShowWindow(hServerBackButton, SW_HIDE);
-	ShowWindow(hServerNextButton, SW_HIDE);
-}
+	ShowWindow(hInputServerInfoBackButton, SW_HIDE);
+	ShowWindow(hInputServerInfoNextButton, SW_HIDE);
 
-void DeleteRoomType() {
-	ShowWindow(hRoomTypeStatic, SW_HIDE);
-	ShowWindow(hCreateRoomButton, SW_HIDE);
-	ShowWindow(hJoinRoomButton, SW_HIDE);
-}
-
-void DeleteRoomCode() {
-	ShowWindow(hRoomCodeStatic, SW_HIDE);
+	ShowWindow(hGuestWaitCodeInputStatic, SW_HIDE);
 	ShowWindow(hCodeStatic, SW_HIDE);
 	ShowWindow(hCode, SW_HIDE);
-	ShowWindow(hCodeBackButton, SW_HIDE);
-	ShowWindow(hCodeNextButton, SW_HIDE);
-}
+	ShowWindow(hGuestWaitCodeInputBackButton, SW_HIDE);
+	ShowWindow(hGuestWaitCodeInputNextButton, SW_HIDE);
 
-void DeleteGameHostWaiting() {
-	ShowWindow(hGameHostWaitingStatic, SW_HIDE);
-	ShowWindow(hStartRoomCodeStatic, SW_HIDE);
-}
-
-void DeleteGameHostStart() {
-	ShowWindow(hGameStartStatic, SW_HIDE);
-	ShowWindow(hGameStartButton, SW_HIDE);
-}
-
-void DeleteGameGuestWaiting() {
-	ShowWindow(hGameGuestWaitingStatic, SW_HIDE);
+	ShowWindow(hGuestWaitHostGameStartStatic, SW_HIDE);
 }

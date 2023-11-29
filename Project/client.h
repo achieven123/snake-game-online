@@ -46,5 +46,5 @@ public:
 	* @param msg, code, player 게임 정보
 	* @details snake, msg, code, player를 참조 형식으로 받아 데이터 수신 함수로 전달
 	*/
-	void makeThread(Snake& snake, string& msg, string& code, int& player, int& isStart);
+	void makeThread(Snake& snake, string& msg, string& code, int& state);
 };

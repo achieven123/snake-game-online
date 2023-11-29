@@ -11,6 +11,20 @@ Snake::Snake() {
 	location.push_back(make_pair(1, 1));
 }
 
+void Snake::initSnake() {
+	dx = 1;
+	dy = 0;
+	score = 0;
+	length = 3;
+
+	location.clear();
+	location.push_back(make_pair(3, 1));
+	location.push_back(make_pair(2, 1));
+	location.push_back(make_pair(1, 1));
+
+	food.clear();
+}
+
 int Snake::getScore() { return score; }
 int Snake::getLength() { return length; }
 vector<pair<int, int>> Snake::getFood() { return food; }
@@ -81,7 +95,7 @@ bool Snake::moveSnake(Board& board) {
 		removeValue = make_pair(next.first, next.second);
 		food.erase(remove(food.begin(), food.end(), removeValue), food.end());
 		generateFood(1, board);
-		score++;
+		score += 100;
 		if (length < 21) length++;
 		break;
 

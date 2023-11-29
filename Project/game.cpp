@@ -1,10 +1,15 @@
 #include "game.h"
 
 string Game::getCode() { return code; }
-int Game::getPlayer() { return player; }
+int Game::getMode() { return mode; }
+int Game::getType() { return type; }
 int Game::getState() { return state; }
+bool Game::getIsWin() { return isWin; }
 
+void Game::setMode(int mode) { this->mode = mode; }
+void Game::setType(int type) { this->type = type; }
 void Game::setState(int state) { this->state = state; }
+void Game::setIsWin(bool isWin) { this->isWin = isWin; }
 
 bool Game::connectServer(HWND hwnd, const char* host, const char* port) {
 	bool openSuccessful = client.openClientSocket(hwnd, host, port);
@@ -14,15 +19,8 @@ bool Game::connectServer(HWND hwnd, const char* host, const char* port) {
 		return false;
 	}
 
-	client.makeThread(snake2, msg, code, player, state);
+	client.makeThread(snake2, msg, code, state);
 	return true;
-}
-
-void Game::initGame() {
-	srand((unsigned int)time(NULL));
-	snake1.generateFood(10, board1);
-	board1.initMap(0, 0);
-	board2.initMap(500, 0);
 }
 
 void Game::createRoom() {
@@ -53,8 +51,13 @@ void Game::endGame() {
 	client.sendData(msg);
 }
 
-void Game::setDirect(int directKey) {
-	snake1.setDirect(directKey);
+void Game::initGame() {
+	board1.initMap(0, 0);
+	board2.initMap(500, 0);
+
+	srand((unsigned int)time(NULL));
+	snake1.initSnake();
+	snake1.generateFood(10, board1);
 }
 
 void Game::drawGame(HDC hdc) {
@@ -62,18 +65,18 @@ void Game::drawGame(HDC hdc) {
 	wstring _score1 = tools.stringToWString("score: " + to_string(snake1.getScore()));
 	wstring _score2 = tools.stringToWString("score: " + to_string(snake2.getScore()));
 
-	if (player < 2) {
+	if (mode == SOLO) {
 		snake1.setMapValue(board1);
 		board1.drawMap(hdc);
 
-		TextOut(hdc, 120, 450, _score1.c_str(), _score1.size());
+		TextOut(hdc, 20, 450, _score1.c_str(), _score1.size());
 	}
-	else {
+	else if (mode == MULTI) {
+		snake1.setMapValue(board1);
+		board1.drawMap(hdc);
+
 		snake2.setMapValue(board2);
 		board2.drawMap(hdc);
-
-		string msg = tools.createJsonData(snake1, "move");
-		client.sendData(msg);
 
 		TextOut(hdc, 20, 450, _code.c_str(), _code.size());
 		TextOut(hdc, 120, 450, _score1.c_str(), _score1.size());
@@ -81,12 +84,19 @@ void Game::drawGame(HDC hdc) {
 	}
 }
 
-bool Game::moveSnake(HDC hdc, bool multi) {
-	bool gameover = false;
-	if (true) {
-		//bool gameover = snake1.moveSnake(snake1, board1);
-		//drawGame(hdc, multi);
-	}
+void Game::setDirect(int directKey) {
+	snake1.setDirect(directKey);
+}
 
-	return gameover;
+void Game::moveSnake() {
+	bool move = snake1.moveSnake(board1);
+
+	string msg = tools.createJsonData(snake1, "move");
+	client.sendData(msg);
+
+	if (!move) {
+		isWin = false;
+		msg = tools.createJsonData(snake1, "end");
+		client.sendData(msg);
+	}
 }

@@ -53,7 +53,7 @@ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ========================================================================
-(END LICENSE TEXT)
+(GAME_END LICENSE TEXT)
 
 The MIT license is compatible with both the GPL and commercial
 software, affording one all of the rights of Public Domain with the

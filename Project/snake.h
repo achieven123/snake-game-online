@@ -19,6 +19,7 @@ private:
 
 public:
 	Snake();
+	void initSnake();
 	
 	int getScore();
 	int getLength();

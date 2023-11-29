@@ -33,5 +33,5 @@ public:
     * Json 데이터를 파싱한 뒤, 각각의 변수에 대입
     * msg가 move일 때에는 상대 플레이어에 데이터 업데이트
     */
-    void parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player, int& state);
+    void parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& state);
 };
