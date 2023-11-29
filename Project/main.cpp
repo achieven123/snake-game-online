@@ -252,6 +252,13 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 		}
 		break;
 
+	case WM_CLOSE:
+		if (MessageBox(hwnd, _T("게임을 종료 하시겠습니까?"), _T("종료 확인"), MB_YESNO) == IDNO) {
+			return 0;
+		}
+
+		break;
+
 	case WM_DESTROY:
 		game.endGame();
 		PostQuitMessage(0);
@@ -307,6 +314,13 @@ LRESULT CALLBACK WinProcSoloPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPAR
 
 	case WM_TIMER:
 		InvalidateRgn(hwnd, NULL, TRUE);	
+		break;
+
+	case WM_CLOSE:
+		if (MessageBox(hwnd, _T("게임을 종료 하시겠습니까?"), _T("종료 확인"), MB_YESNO) == IDNO) {
+			return 0;
+		}
+
 		break;
 
 	case WM_DESTROY:
@@ -374,6 +388,13 @@ LRESULT CALLBACK WinProcMultiPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 
 	case WM_TIMER:
 		InvalidateRgn(hwnd, NULL, TRUE);
+		break;
+
+	case WM_CLOSE:
+		if (MessageBox(hwnd, _T("게임을 종료 하시겠습니까?"), _T("종료 확인"), MB_YESNO) == IDNO) {
+			return 0;
+		}
+
 		break;
 
 	case WM_DESTROY:
@@ -778,6 +799,7 @@ void DeleteAllWindows() {
 	ShowWindow(hSoloPlayerButton, SW_HIDE);
 	ShowWindow(hMultiPlayerButton, SW_HIDE);
 
+	ShowWindow(hGameTitle, SW_HIDE);
 	ShowWindow(hSelectTypeStatic, SW_HIDE);
 	ShowWindow(hCreateRoomButton, SW_HIDE);
 	ShowWindow(hJoinRoomButton, SW_HIDE);

@@ -94,9 +94,9 @@ void Game::moveSnake() {
 	string msg = tools.createJsonData(snake1, "move");
 	client.sendData(msg);
 
-	if (!move) {
-		isWin = false;
-		msg = tools.createJsonData(snake1, "end");
-		client.sendData(msg);
-	}
+	//if (!move) {
+	//	isWin = false;
+	//	msg = tools.createJsonData(snake1, "end");
+	//	client.sendData(msg);
+	//}
 }
