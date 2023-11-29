@@ -40,8 +40,8 @@ void Client::closeClientSocket() {
 	WSACleanup();
 }
 
-void Client::sendData(const string& data) {
-	send(clientSocket, data.c_str(), data.size(), 0);
+void Client::sendData(const string& sendMsg) {
+	send(clientSocket, sendMsg.c_str(), sendMsg.size(), 0);
 }
 
 /*
@@ -51,7 +51,7 @@ void Client::sendData(const string& data) {
 * @param msg, code, player 게임 정보
 * @details 서버로부터 데이터를 받아 상대 Snake의 값과 게임 정보(msg, code, player)를 설정
 */
-void recvData(SOCKET clientSocket, Snake& snake, string& msg, string& code, int& player) {
+void recvData(SOCKET clientSocket, Snake& snake, string& msg, string& code, int& player, int& state) {
 	char buffer[PACKET_SIZE];
 	Tools tools;
 
@@ -59,11 +59,11 @@ void recvData(SOCKET clientSocket, Snake& snake, string& msg, string& code, int&
 		ZeroMemory(&buffer, PACKET_SIZE);
 		recv(clientSocket, buffer, PACKET_SIZE, 0);
 		cout << ">> Server:" << buffer << endl;
-		tools.parsingJsonData(buffer, snake, msg, code, player);
+		tools.parsingJsonData(buffer, snake, msg, code, player, state);
 	}
 }
 
-void Client::makeThread(Snake& snake, string& msg, string& code, int& player) {
-	thread recvThread = thread(recvData, clientSocket, ref(snake), ref(msg), ref(code), ref(player));
+void Client::makeThread(Snake& snake, string& msg, string& code, int& player, int& state) {
+	thread recvThread = thread(recvData, clientSocket, ref(snake), ref(msg), ref(code), ref(player), ref(state));
 	recvThread.detach();
 }

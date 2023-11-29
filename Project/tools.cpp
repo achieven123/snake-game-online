@@ -1,16 +1,15 @@
 #include "tools.h"
 
-const wchar_t* Tools::ConvertToWideString(const string& str) {
-    static wstring_convert<codecvt_utf8<wchar_t>> converter;
-    static wstring wideString = converter.from_bytes(str);
-	return wideString.c_str();
-}
-
-LPCWSTR IntToLPCWSTR(int value) {
-	wchar_t buffer[20]; // 충분한 크기의 버퍼 할당
-	swprintf(buffer, sizeof(buffer) / sizeof(wchar_t), L"%d", value); // 정수를 유니코드 문자열로 변환
-
-	return buffer;
+wstring Tools::stringToWString(const string& str) {
+	int len;
+	int slength = (int)str.length() + 1;
+	len = MultiByteToWideChar(CP_ACP, 0, str.c_str(), slength, 0, 0);
+	wchar_t* buf = new wchar_t[len];
+	
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), slength, buf, len);
+	wstring r(buf);
+	delete[] buf;
+	return r;
 }
 
 string Tools::createJsonData(Snake& snake, const string msg) {
@@ -45,7 +44,7 @@ string Tools::createJsonData(Snake& snake, const string msg) {
 	return Json::writeString(builder, json);
 }
 
-void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player) {
+void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player, int& state) {
 	Json::Value json;
 	Json::CharReaderBuilder builder;
 	Json::CharReader* reader = builder.newCharReader();
@@ -78,7 +77,16 @@ void Tools::parsingJsonData(const string recvMsg, Snake& snake, string& msg, str
 			location.emplace_back(x, y);
 		}
 
-		if (msg == "move") {
+		if (msg == "ready") {
+			state = 0;
+		}
+		else if (msg == "start") {
+			state = 1;
+		}
+		else if (msg == "end") {
+			state = 2;
+		}
+		else if (msg == "move") {
 			snake.setScore(score);
 			snake.setLength(length);
 			snake.setFood(food);

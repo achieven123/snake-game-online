@@ -60,6 +60,7 @@ public:
 	/*
 	* @brief Snake 이동 함수
 	* @param board 음식, 충돌 판별할 Board 객체
+	* @return 이동할 때 충돌하지 않으면 True, 충돌 시 False 반환
 	* @details dx, dy 방향으로 Snake 이동, 이동 중 다양한 이벤트 처리
 	*/
 	bool moveSnake(Board& board);

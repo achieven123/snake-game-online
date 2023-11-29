@@ -87,7 +87,7 @@ bool Snake::moveSnake(Board& board) {
 
 	case Board::WALL:
 	case Board::BODY:
-		return true;
+		return false;
 	}
 
 	location.insert(location.begin(), next);
@@ -97,7 +97,7 @@ bool Snake::moveSnake(Board& board) {
 		location.pop_back();
 	}
 
-	return false;
+	return true;
 }
 
 void Snake::setMapValue(Board& board) {

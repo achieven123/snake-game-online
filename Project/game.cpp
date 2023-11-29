@@ -1,5 +1,11 @@
 #include "game.h"
 
+string Game::getCode() { return code; }
+int Game::getPlayer() { return player; }
+int Game::getState() { return state; }
+
+void Game::setState(int state) { this->state = state; }
+
 bool Game::connectServer(HWND hwnd, const char* host, const char* port) {
 	bool openSuccessful = client.openClientSocket(hwnd, host, port);
 	
@@ -8,7 +14,7 @@ bool Game::connectServer(HWND hwnd, const char* host, const char* port) {
 		return false;
 	}
 
-	client.makeThread(snake2, msg, code, player);
+	client.makeThread(snake2, msg, code, player, state);
 	return true;
 }
 
@@ -20,86 +26,67 @@ void Game::initGame() {
 }
 
 void Game::createRoom() {
-	string msg = tools.createJsonData(snake1, "create");
-	client.sendData(msg);
+	string sendMsg = tools.createJsonData(snake1, "create");
+	client.sendData(sendMsg);
 }
 
-bool Game::joinRoom(HWND hwnd, string code) {
-	
-	string msg = tools.createJsonData(snake1, "join");
-	client.sendData(msg);
+bool Game::joinRoom(HWND hwnd, const string code) {
+	string sendMsg = tools.createJsonData(snake1, "join " + code);
+	client.sendData(sendMsg);
 
-	Sleep(100);
-	//if (recvMsg == "Join error!") {
-	//	MessageBox(hwnd, TEXT("방이 없습니다."), TEXT("Error"), MB_ICONERROR);
-	//	return false;
-	//}
+	Sleep(50);
+	if (msg == "join error") {
+		MessageBox(hwnd, TEXT("방이 없습니다."), TEXT("Error"), MB_ICONERROR);
+		return false;
+	}
 
 	return true;
 }
 
-
+void Game::startGame() {
+	string msg = tools.createJsonData(snake1, "start");
+	client.sendData(msg);
+}
 
 void Game::endGame() {
-	client.closeClientSocket();
+	string msg = tools.createJsonData(snake1, "end");
+	client.sendData(msg);
 }
 
 void Game::setDirect(int directKey) {
-	snake1.setDirect(snake1, directKey);
+	snake1.setDirect(directKey);
 }
 
-void Game::startGame() {
-	gameProgress = true;
-	string msg = tools.createJsonData(snake1, "start");
-}
+void Game::drawGame(HDC hdc) {
+	wstring _code = tools.stringToWString("code: " + code);
+	wstring _score1 = tools.stringToWString("score: " + to_string(snake1.getScore()));
+	wstring _score2 = tools.stringToWString("score: " + to_string(snake2.getScore()));
 
-void Game::drawGame(HDC hdc, bool multi) {
-	string _code = "code: " /*+ snake1.getCode()*/;
-	wstring code(_code.begin(), _code.end());
+	if (player < 2) {
+		snake1.setMapValue(board1);
+		board1.drawMap(hdc);
 
-	string _score1 = "score: " + to_string(snake1.getScore());
-	wstring score1(_score1.begin(), _score1.end());
-
-	string _score2 = "score: " + to_string(snake2.getScore());
-	wstring score2(_score2.begin(), _score2.end());
-
-	snake1.setMapValue(snake1, board1);
-	board1.drawMap(hdc);
-
-	if (multi) {
-		snake2.setMapValue(snake2, board2);
+		TextOut(hdc, 120, 450, _score1.c_str(), _score1.size());
+	}
+	else {
+		snake2.setMapValue(board2);
 		board2.drawMap(hdc);
 
 		string msg = tools.createJsonData(snake1, "move");
 		client.sendData(msg);
 
-		TextOut(hdc, 20, 450, code.c_str(), code.length());
-		TextOut(hdc, 120, 450, score1.c_str(), score1.length());
-		TextOut(hdc, 520, 450, score2.c_str(), score2.length());
-	}
-	else {
-		TextOut(hdc, 20, 450, score1.c_str(), score1.length());
+		TextOut(hdc, 20, 450, _code.c_str(), _code.size());
+		TextOut(hdc, 120, 450, _score1.c_str(), _score1.size());
+		TextOut(hdc, 520, 450, _score2.c_str(), _score2.size());
 	}
 }
 
 bool Game::moveSnake(HDC hdc, bool multi) {
 	bool gameover = false;
-	if (gameProgress) {
-		bool gameover = snake1.moveSnake(snake1, board1);
-		drawGame(hdc, multi);
+	if (true) {
+		//bool gameover = snake1.moveSnake(snake1, board1);
+		//drawGame(hdc, multi);
 	}
 
 	return gameover;
 }
-//
-//string Game::getSnakeCode() {
-//	return snake1.getCode();
-//}
-//
-//bool Game::IsTwoPlayer() {
-//	return snake2.getCode() != "";
-//}
-//
-//int Game::getPlayer() {
-//	return snake1.getPlayer();
-//}

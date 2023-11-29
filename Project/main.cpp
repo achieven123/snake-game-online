@@ -15,24 +15,32 @@
 #define ID_CODE_NEXT_BUTTON 401
 #define ID_GAME_START 500
 
+#define ID_HOST 0
+#define ID_GUEST 1
+
+#define ID_READY 0
+#define ID_START 1
+#define ID_END 2
+#define ID_GAME 3
+
 using namespace std;
 
 Game game;
 Tools tools;
-bool multi = false;
-bool gameStart = false;
+int playerType;
 
 RECT rcClient;
-HFONT hGameTitleFont, hRoomCommentFont;
+HFONT hFont;
 int width, height;
 
 HINSTANCE hInst;
 HWND hwndMainMenu, hwndGame;
 HWND hGameTitle, hSoloPlayerButton, hMultiPlayerButton;
 HWND hIPAddressStatic, hPortStatic, hIPAddress, hPort, hServerBackButton, hServerNextButton;
-HWND hRoomTypeStatoc, hCreateRoomButton, hJoinRoomButton;
+HWND hRoomTypeStatic, hCreateRoomButton, hJoinRoomButton;
 HWND hRoomCodeStatic, hCodeStatic, hCode, hCodeBackButton, hCodeNextButton;
-HWND hGameWaitingStatic, hStartRoomCodeStatic;
+HWND hGameHostWaitingStatic, hStartRoomCodeStatic;
+HWND hGameGuestWaitingStatic;
 HWND hGameStartStatic, hGameStartButton;
 
 LPCTSTR MainMenuClass = TEXT("Main Menu Class");
@@ -48,13 +56,15 @@ void DrawRoomType(HWND hwnd);
 void DrawRoomCode(HWND hwnd);
 void DrawGameHostWaiting(HWND hwnd);
 void DrawGameHostStart(HWND hwnd);
+void DrawGameGuestWaiting(HWND hwnd);
 
 void DeleteSelectMode();
 void DeleteServerInfo();
 void DeleteRoomType();
 void DeleteRoomCode();
-void DeleteGameWaiting();
-void DeleteGameStart();
+void DeleteGameHostWaiting();
+void DeleteGameHostStart();
+void DeleteGameGuestWaiting();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpszCmdLine, _In_ int nCmdShow) {
 	MSG		 msg;
@@ -132,13 +142,11 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case ID_SOLO_PLAYER:
-			multi = false;
 			DeleteSelectMode();
 			DrawGameHostStart(hwnd);
 			break;
 
 		case ID_MULTI_PLAYER:
-			multi = true;
 			DeleteSelectMode();
 			DrawServerInfo(hwnd);
 			break;
@@ -172,13 +180,16 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 			break;
 
 		case ID_CREATE_ROOM:
+			playerType = ID_HOST;
 			game.createRoom();
+			Sleep(50);
 			DeleteRoomType();
 			DrawGameHostWaiting(hwnd);
 			SetTimer(hwnd, 1, 1000, NULL);
 			break;
 
 		case ID_JOIN_ROOM:
+			playerType = ID_GUEST;
 			DeleteRoomType();
 			DrawRoomCode(hwnd);
 			break;
@@ -193,26 +204,24 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 
 			char code[7];
 
-			GetWindowText(hCode, _code, 256);
+			GetWindowText(hCode, _code, 7);
 
-			WideCharToMultiByte(CP_UTF8, 0, _code, -1, code, 256, NULL, NULL);
+			WideCharToMultiByte(CP_UTF8, 0, _code, -1, code, 7, NULL, NULL);
 
 			bool joinSuccessful;
 			joinSuccessful = game.joinRoom(hwnd, code);
 
 			if (joinSuccessful) {
 				DeleteRoomCode();
-				DrawGameHostStart(hwnd);
+				DrawGameGuestWaiting(hwnd);
 				SetTimer(hwnd, 1, 1000, NULL);
 			}
 
 			break;
 
 		case ID_GAME_START:
-			DeleteGameStart();
-			ShowWindow(hwndMainMenu, SW_HIDE);
-			ShowWindow(hwndGame, SW_SHOWNORMAL);
-			gameStart = true;
+			game.startGame();
+			DeleteGameHostWaiting();
 			break;
 		}
 		
@@ -225,15 +234,40 @@ LRESULT CALLBACK WinProcMainMenu(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 		return (LRESULT)GetStockObject(NULL_BRUSH);
 
 	case WM_TIMER:
-		if (1 < 2) {
+		if (game.getState() == ID_READY) {
+			if (playerType == ID_HOST && game.getPlayer() == 2) {
+				DeleteGameHostWaiting();
+				DeleteGameHostStart();
+				DrawGameHostStart(hwnd);
+			}
 		}
-		else {
-			DeleteGameWaiting();
-			DrawGameHostStart(hwnd);
-			KillTimer(hwnd, 1);
+		else if (game.getState() == ID_START) {
+			if (playerType == ID_HOST) {
+				DeleteGameHostStart();
+				cout << "start" << endl;
+			}
+			else if (playerType == ID_GUEST) {
+				DeleteGameGuestWaiting();
+			}
+
+			game.setState(ID_GAME);
+			ShowWindow(hwndMainMenu, SW_HIDE);
+			ShowWindow(hwndGame, SW_SHOWNORMAL);
 		}
-		
+		else if (game.getState() == ID_END) {
+			game.setState(ID_READY);
+			playerType = ID_HOST;
+
+			DeleteGameGuestWaiting();
+			DeleteGameHostStart();
+			DrawGameHostWaiting(hwnd);
+			
+			ShowWindow(hwndMainMenu, SW_SHOWNORMAL);
+			ShowWindow(hwndGame, SW_HIDE);
+		}
+
 		break;
+
 	case WM_DESTROY:
 		game.endGame();
 		PostQuitMessage(0);
@@ -256,10 +290,10 @@ LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hwnd, &ps);
 		
 
-		if (gameStart) {
-			game.moveSnake(hdc, multi);
-			//if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
-		}
+		//if (gameStart) {
+		//	game.moveSnake(hdc, multi);
+		//	//if (game.moveSnake(hdc)) KillTimer(hwnd, 1);
+		//}
 		//if (game.getPlayer() == 1) {
 		//	TextOut(hdc, 520, 450, L"상대를 기다리는 중...", wcslen(L"상대를 기다리는 중..."));
 		//}
@@ -278,10 +312,11 @@ LRESULT CALLBACK WinProcGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_TIMER:
 		InvalidateRgn(hwnd, NULL, TRUE);
-
-		//if (game.IsTwoPlayer()) {
-			
-		//}
+		
+		if (!game.getState()) {
+			ShowWindow(hwndGame, SW_HIDE);
+			ShowWindow(hwndMainMenu, SW_SHOWNORMAL);
+		}
 
 		break;
 
@@ -299,21 +334,7 @@ void DrawSetting(HWND hwnd) {
 	width = rcClient.right - rcClient.left;
 	height = rcClient.bottom - rcClient.top;
 
-	hGameTitleFont = CreateFont(
-		40, 0, 0, 0,
-		FW_NORMAL,
-		FALSE,
-		FALSE,
-		FALSE,
-		DEFAULT_CHARSET,
-		OUT_OUTLINE_PRECIS,
-		CLIP_DEFAULT_PRECIS,
-		CLEARTYPE_QUALITY,
-		VARIABLE_PITCH,
-		NULL
-	);
-
-	hRoomCommentFont = CreateFont(
+	hFont = CreateFont(
 		30, 0, 0, 0,
 		FW_NORMAL,
 		FALSE,
@@ -340,7 +361,7 @@ void DrawSelectMode(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hGameTitle, WM_SETFONT, (WPARAM)hGameTitleFont, TRUE);
+	SendMessage(hGameTitle, WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	hSoloPlayerButton = CreateWindowEx(
 		NULL,
@@ -379,7 +400,7 @@ void DrawServerInfo(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hGameTitle, WM_SETFONT, (WPARAM)hGameTitleFont, TRUE);
+	SendMessage(hGameTitle, WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	hIPAddressStatic = CreateWindow(
 		L"STATIC",
@@ -452,7 +473,7 @@ void DrawServerInfo(HWND hwnd) {
 }
 
 void DrawRoomType(HWND hwnd) {
-	hRoomTypeStatoc = CreateWindow(
+	hRoomTypeStatic = CreateWindow(
 		L"STATIC",
 		L"참여 방법 선택",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -463,7 +484,7 @@ void DrawRoomType(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hRoomTypeStatoc, WM_SETFONT, (WPARAM)hRoomCommentFont, TRUE);
+	SendMessage(hRoomTypeStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	hCreateRoomButton = CreateWindowEx(
 		NULL,
@@ -502,7 +523,7 @@ void DrawRoomCode(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hRoomCodeStatic, WM_SETFONT, (WPARAM)hRoomCommentFont, TRUE);
+	SendMessage(hRoomCodeStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 	
 	hCodeStatic = CreateWindow(
 		L"STATIC",
@@ -553,7 +574,7 @@ void DrawRoomCode(HWND hwnd) {
 }
 
 void DrawGameHostWaiting(HWND hwnd) {
-	hGameWaitingStatic = CreateWindow(
+	hGameHostWaitingStatic = CreateWindow(
 		L"STATIC",
 		L"상대를 기다리는 중...",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -564,31 +585,19 @@ void DrawGameHostWaiting(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hGameStartStatic, WM_SETFONT, (WPARAM)hRoomCommentFont, TRUE);
-	string str = "Room Code: " /*+ game.getSnakeCode()*/;
-	const wchar_t* roomCode = tools.ConvertToWideString(str);
-	std::wstring wideString(roomCode);
-
-	//// wstring을 string으로 변환
-	//std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-	//std::string convertedString = converter.to_bytes(wideString);
-
-	// 변환된 string 출력
-	//std::cout << "Code: " << str << std::endl;
-	//std::wcout << "Converted string: " << wideString << std::endl;
-
-	if (multi) {
-		hStartRoomCodeStatic = CreateWindow(
-			L"STATIC",
-			wideString.c_str(),
-			WS_CHILD | WS_VISIBLE | SS_CENTER,
-			(width - 300) / 2, (height - 60) / 2 + 25, 300, 60,
-			hwnd,
-			NULL,
-			hInst,
-			NULL
-		);
-	}
+	SendMessage(hGameHostWaitingStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+	wstring _code = tools.stringToWString("Room Code: " + game.getCode());
+	
+	hStartRoomCodeStatic = CreateWindow(
+		L"STATIC",
+		_code.c_str(),
+		WS_CHILD | WS_VISIBLE | SS_CENTER,
+		(width - 300) / 2, (height - 60) / 2 + 50, 300, 60,
+		hwnd,
+		NULL,
+		hInst,
+		NULL
+	);
 }
 
 void DrawGameHostStart(HWND hwnd) {
@@ -602,7 +611,8 @@ void DrawGameHostStart(HWND hwnd) {
 		hInst,
 		NULL
 	);
-
+	
+	SendMessage(hGameStartStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	hGameStartButton = CreateWindowEx(
 		NULL,
@@ -618,7 +628,7 @@ void DrawGameHostStart(HWND hwnd) {
 }
 
 void DrawGameGuestWaiting(HWND hwnd) {
-	hGameWaitingStatic = CreateWindow(
+	hGameGuestWaitingStatic = CreateWindow(
 		L"STATIC",
 		L"호스트가 게임을 시작하길 기다리는 중...",
 		WS_CHILD | WS_VISIBLE | SS_CENTER,
@@ -629,10 +639,11 @@ void DrawGameGuestWaiting(HWND hwnd) {
 		NULL
 	);
 
-	SendMessage(hGameStartStatic, WM_SETFONT, (WPARAM)hRoomCommentFont, TRUE);
-	string str = "Room Code: " /*+ game.getSnakeCode()*/;
-	const wchar_t* roomCode = tools.ConvertToWideString(str);
-	std::wstring wideString(roomCode);
+	SendMessage(hGameGuestWaitingStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+	
+	//string str = "Room Code: " /*+ game.getSnakeCode()*/;
+	//const wchar_t* roomCode = tools.ConvertToWideString(str);
+	//std::wstring wideString(roomCode);
 
 	//// wstring을 string으로 변환
 	//std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -642,18 +653,18 @@ void DrawGameGuestWaiting(HWND hwnd) {
 	//std::cout << "Code: " << str << std::endl;
 	//std::wcout << "Converted string: " << wideString << std::endl;
 
-	if (multi) {
-		hStartRoomCodeStatic = CreateWindow(
-			L"STATIC",
-			wideString.c_str(),
-			WS_CHILD | WS_VISIBLE | SS_CENTER,
-			(width - 300) / 2, (height - 60) / 2 + 25, 300, 60,
-			hwnd,
-			NULL,
-			hInst,
-			NULL
-		);
-	}
+	//if (multi) {
+	//	hStartRoomCodeStatic = CreateWindow(
+	//		L"STATIC",
+	//		L"asdfa",
+	//		WS_CHILD | WS_VISIBLE | SS_CENTER,
+	//		(width - 300) / 2, (height - 60) / 2 + 25, 300, 60,
+	//		hwnd,
+	//		NULL,
+	//		hInst,
+	//		NULL
+	//	);
+	//}
 }
 
 void DeleteSelectMode() {
@@ -673,7 +684,7 @@ void DeleteServerInfo() {
 }
 
 void DeleteRoomType() {
-	ShowWindow(hRoomTypeStatoc, SW_HIDE);
+	ShowWindow(hRoomTypeStatic, SW_HIDE);
 	ShowWindow(hCreateRoomButton, SW_HIDE);
 	ShowWindow(hJoinRoomButton, SW_HIDE);
 }
@@ -686,13 +697,16 @@ void DeleteRoomCode() {
 	ShowWindow(hCodeNextButton, SW_HIDE);
 }
 
-void DeleteGameWaiting() {
-	ShowWindow(hGameWaitingStatic, SW_HIDE);
+void DeleteGameHostWaiting() {
+	ShowWindow(hGameHostWaitingStatic, SW_HIDE);
 	ShowWindow(hStartRoomCodeStatic, SW_HIDE);
 }
 
-void DeleteGameStart() {
+void DeleteGameHostStart() {
 	ShowWindow(hGameStartStatic, SW_HIDE);
-	ShowWindow(hStartRoomCodeStatic, SW_HIDE);
 	ShowWindow(hGameStartButton, SW_HIDE);
+}
+
+void DeleteGameGuestWaiting() {
+	ShowWindow(hGameGuestWaitingStatic, SW_HIDE);
 }

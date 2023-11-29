@@ -9,8 +9,12 @@ using namespace std;
 
 class Tools {
 public:
-    LPCWSTR IntToLPCWSTR(int value);
-    const wchar_t* ConvertToWideString(const string& str);
+    /*
+    * @brief string을 wstring으로 변환하는 함수
+    * @param str wstring으로 변환할 string 타입
+    * @return 변환한 wstring 변수를 반환
+    */
+    wstring stringToWString(const string& str);
     
     /*
     * @brief Json 데이터 만드는 함수
@@ -29,5 +33,5 @@ public:
     * Json 데이터를 파싱한 뒤, 각각의 변수에 대입
     * msg가 move일 때에는 상대 플레이어에 데이터 업데이트
     */
-    void parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player);
+    void parsingJsonData(const string recvMsg, Snake& snake, string& msg, string& code, int& player, int& state);
 };
