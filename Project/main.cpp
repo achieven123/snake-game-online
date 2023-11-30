@@ -348,8 +348,8 @@ LRESULT CALLBACK WinProcMultiPlayerGame(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 		if (game.getState() == Game::GAME_START) {
 			game.setState(Game::GAME_IN_PROGRESS);
 			game.initGame();
-			SetTimer(hwnd, 1, 100, NULL);
-			Sleep(1000);
+			SetTimer(hwnd, 1, 500, NULL);
+			//Sleep(1000);
 		}
 		else if (game.getState() == Game::GAME_IN_PROGRESS) {
 			game.moveSnake();
