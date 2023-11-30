@@ -18,9 +18,11 @@ public:
 	static const int SOLO = 0;
 	static const int MULTI = 1;
 
+	// Multi mode에서 Host인지 Guest 인지 판단하는 상수
 	static const int HOST = 0;
 	static const int GUEST = 1;
 
+	// 현재 화면에 그릴 윈도우의 상태를 나타내는 상수
 	static const int MAIN_MENU = 0;
 	static const int SERVER_INFO = 1;
 	static const int SELECT_TYPE = 2;
@@ -33,27 +35,29 @@ public:
 	static const int GAME_END = 9;
 
 private:
-	Snake snake1, snake2;
-	Board board1, board2;
-	Client client;
-	Tools tools;
+	Snake snake1, snake2; // 나의 Snake, 상대 Snake
+	Board board1, board2; // 나의 Board, 상대 Board
+	Client client; // 서버와 통신을 위함 Client 클래스
+	Tools tools; // 자주 사용하는 툴 함수 클래스
 	
-	string msg;
-	string code;
+	string msg; // 서버와 통신을 위한 msg
+	string code; // 방 코드
 	
-	int mode;
-	int type;
-	int state;
+	int mode; // Solo/Multi mode 판별을 위한 변수
+	int type; // Multi mode에서 Host인지 Guest인지 판단
+	int state; // 현재 화면에 그릴 윈도우의 상태를 나타내는 상수를 저장
 
-	bool isWin = true;
+	bool isWin = true; // Multi mode에서 이겼는지 판단하는 변수
 
 public:
+	// private 변수 getter
 	string getCode();
 	int getMode();
 	int getType();
 	int getState();
 	bool getIsWin();
 
+	// private 변수 setter
 	void setMode(int mode);
 	void setType(int type);
 	void setState(int state);
@@ -100,8 +104,23 @@ public:
 	*/
 	void initGame();
 
-
+	/*
+	* @brief 게임 map과 정보들을 그리는 함수
+	* @details solo/Multi mode에 따라서 map을 한 개 그리거나 두 개 그림
+	*/
 	void drawGame(HDC hdc);
+
+	/*
+	* @brief 입력한 방향키대로 뱀의 방향을 조정
+	* @details 입력한 방향키를 Snake 클래스로 전달하여 방향을 정하도록 함
+	*/
 	void setDirect(int directKey);
+
+	/*
+	* @brief Snake의 방향으로 뱀을 한 칸 이동
+	* @details
+	* 다음 위치에서의 충돌 판정을 Snake 클래스의 moveSnake를 통해 확인
+	* Multi mode에서는 snake정보를 서버로 보냄
+	*/
 	void moveSnake();
 };

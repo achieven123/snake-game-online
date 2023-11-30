@@ -12,6 +12,7 @@ using namespace std;
 
 class Client {
 private:
+	// 서버 통신을 위한 변수
 	SOCKET clientSocket;
 	WSADATA wsaData;
 	SOCKADDR_IN clientAddr;

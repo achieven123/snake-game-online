@@ -10,22 +10,27 @@ using namespace std;
 
 class Snake {
 private:
-	int dx;
-	int dy;
-	int score;
-	int length;
-	vector<pair<int, int>> food;
-	vector<pair<int, int>> location;
+	int dx; // Snake가 움직일 때 x방향으로 움직이는 정도
+	int dy; // Snake가 움직일 때 y방향으로 움직이는 정도
+	int score; // Snake가 먹은 음식의 개수 * 100
+	int length; // Snake의 길이
+	vector<pair<int, int>> food; // 음식의 좌표
+	vector<pair<int, int>> location; // Snake의 위치 좌표
 
 public:
+	// Snake 클래스 생성자
 	Snake();
+
+	// Snake 클래스 멤버 변수 초기화 함수
 	void initSnake();
 	
+	// private 변수 getter
 	int getScore();
 	int getLength();
 	vector<pair<int, int>> getFood();
 	vector<pair<int, int>> getLocation();
 
+	// private 변수 setter
 	void setScore(int score);
 	void setLength(int length);
 	void setFood(vector<pair<int, int>> food);
